@@ -7,7 +7,10 @@ function jsonError(res, status, message) {
 }
 
 function parsePagination(query, defaultPageSize = 10, maxPageSize = 20) {
-  const pageSize = Math.min(Math.max(Number(query.pageSize) || defaultPageSize, 1), maxPageSize);
+  const pageSize = Math.min(
+    Math.max(Number(query.pageSize) || defaultPageSize, 1),
+    maxPageSize,
+  );
   const page = Math.max(Number.parseInt(query.page, 10) || 1, 1);
   return { page, pageSize };
 }
@@ -39,4 +42,10 @@ function serializeRequest(request) {
   };
 }
 
-module.exports = { clean, jsonError, parsePagination, ownerQuery, serializeRequest };
+module.exports = {
+  clean,
+  jsonError,
+  parsePagination,
+  ownerQuery,
+  serializeRequest,
+};

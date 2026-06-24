@@ -4,6 +4,7 @@ const { jwt } = require("better-auth/plugins");
 const { client, db } = require("./db");
 
 const auth = betterAuth({
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:4000",
   plugins: [jwt()],
   emailAndPassword: {
     enabled: true,

@@ -1,5 +1,4 @@
-const dotenv = require("dotenv");
-dotenv.config();
+require("dotenv").config({ override: true });
 
 const express = require("express");
 const cors = require("cors");
@@ -15,14 +14,21 @@ const fundingRoutes = require("./src/routes/funding.routes");
 const stripeRoutes = require("./src/routes/stripe.routes");
 
 const app = express();
-const port = process.env.PORT || 9000;
+const port = process.env.PORT || 400;
 
 app.use(cors(corsOptions));
+
 app.use("/api/auth", toNodeHandler(auth));
-app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), fundingController.handleWebhook);
+app.post(
+  "/api/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  fundingController.handleWebhook,
+);
 app.use(express.json());
 
-app.get("/", (req, res) => res.json({ status: "ok", message: "LifeFlow server is running" }));
+app.get("/", (req, res) =>
+  res.json({ status: "ok", message: "LifeFlow server is running" }),
+);
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 
 app.use("/api/donation-requests", donationRequestRoutes);
@@ -32,7 +38,9 @@ app.use("/api/funding", fundingRoutes);
 app.use("/api/stripe", stripeRoutes);
 
 if (require.main === module) {
-  app.listen(port, () => console.log(`LifeFlow server running on http://localhost:${port}`));
+  app.listen(port, () =>
+    console.log(`LifeFlow server running on http://localhost:${port}`),
+  );
 }
 
 module.exports = app;

@@ -1,5 +1,9 @@
 const clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
-const allowedOrigins = [clientUrl, "http://localhost:3000", "http://localhost:3001"];
+const allowedOrigins = [
+  clientUrl,
+  "http://localhost:3000",
+  "http://localhost:3001",
+];
 
 const corsOptions = {
   origin(origin, callback) {
@@ -11,7 +15,13 @@ const corsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "stripe-signature"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "stripe-signature",
+  ],
 };
 
 module.exports = { corsOptions };

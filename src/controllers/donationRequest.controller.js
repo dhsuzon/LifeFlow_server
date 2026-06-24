@@ -2,13 +2,19 @@ const { ObjectId } = require("mongodb");
 const { donationRequests } = require("../models/donationRequestModel");
 const { users } = require("../models/userModel");
 const { bloodGroups } = require("../data/bloodGroups");
-const { clean, jsonError, parsePagination, ownerQuery, serializeRequest } = require("../utils/response");
+const {
+  clean,
+  jsonError,
+  parsePagination,
+  ownerQuery,
+  serializeRequest,
+} = require("../utils/response");
 const { isValidLocation } = require("../utils/geo");
 
 const allowedBloodGroups = new Set(bloodGroups.map((group) => group.name));
 const statuses = new Set(["pending", "inprogress", "done", "canceled"]);
 
-function readRequestInput(body) {
+const readRequestInput = (body) => {
   return {
     recipientName: clean(body?.recipientName),
     recipientDistrict: clean(body?.recipientDistrict),
@@ -20,11 +26,16 @@ function readRequestInput(body) {
     donationTime: clean(body?.donationTime),
     requestMessage: clean(body?.requestMessage),
   };
-}
+};
 
 exports.createRequest = async (req, res) => {
   const user = req.user;
-  if (user.status !== "active") return jsonError(res, 403, "Only active users can create donation requests.");
+  if (user.status !== "active")
+    return jsonError(
+      res,
+      403,
+      "Only active users can create donation requests.",
+    );
 
   const input = readRequestInput(req.body);
   if (Object.values(input).some((value) => !value)) {
@@ -33,7 +44,7 @@ exports.createRequest = async (req, res) => {
   if (!allowedBloodGroups.has(input.bloodGroup)) {
     return jsonError(res, 400, "Please select a valid blood group.");
   }
-  if (!(isValidLocation(input.recipientDistrict, input.recipientUpazila))) {
+  if (!isValidLocation(input.recipientDistrict, input.recipientUpazila)) {
     return jsonError(res, 400, "Please select a valid district and upazila.");
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.donationDate)) {
@@ -54,15 +65,22 @@ exports.createRequest = async (req, res) => {
     updatedAt: now,
   });
 
-  return res.status(201).json({ success: true, requestId: result.insertedId.toString() });
+  return res
+    .status(201)
+    .json({ success: true, requestId: result.insertedId.toString() });
 };
 
 exports.getMyRequests = async (req, res) => {
   const user = req.user;
-  const selectedStatus = statuses.has(req.query.status) ? req.query.status : "all";
+  const selectedStatus = statuses.has(req.query.status)
+    ? req.query.status
+    : "all";
   const { page, pageSize } = parsePagination(req.query, 5, 20);
   const baseQuery = ownerQuery(user);
-  const query = selectedStatus === "all" ? baseQuery : { $and: [baseQuery, { donationStatus: selectedStatus }] };
+  const query =
+    selectedStatus === "all"
+      ? baseQuery
+      : { $and: [baseQuery, { donationStatus: selectedStatus }] };
 
   const collection = donationRequests();
   const totalItems = await collection.countDocuments(query);
@@ -109,14 +127,26 @@ exports.searchDonors = async (req, res) => {
   const district = clean(req.query.district);
   const upazila = clean(req.query.upazila);
 
-  if (!allowedBloodGroups.has(bloodGroup) || !(isValidLocation(district, upazila))) {
+  if (
+    !allowedBloodGroups.has(bloodGroup) ||
+    !isValidLocation(district, upazila)
+  ) {
     return res.json({ success: true, donors: [] });
   }
 
   const donors = await users()
     .find(
       { role: "donor", status: "active", bloodGroup, district, upazila },
-      { projection: { name: 1, email: 1, image: 1, bloodGroup: 1, district: 1, upazila: 1 } },
+      {
+        projection: {
+          name: 1,
+          email: 1,
+          image: 1,
+          bloodGroup: 1,
+          district: 1,
+          upazila: 1,
+        },
+      },
     )
     .limit(50)
     .toArray();
@@ -136,15 +166,19 @@ exports.searchDonors = async (req, res) => {
 };
 
 exports.getPublicRequestById = async (req, res) => {
-  if (!ObjectId.isValid(req.params.id)) return jsonError(res, 400, "Invalid request.");
-  const request = await donationRequests().findOne({ _id: new ObjectId(req.params.id) });
+  if (!ObjectId.isValid(req.params.id))
+    return jsonError(res, 400, "Invalid request.");
+  const request = await donationRequests().findOne({
+    _id: new ObjectId(req.params.id),
+  });
   if (!request) return jsonError(res, 404, "Request not found.");
   return res.json({ success: true, request: serializeRequest(request) });
 };
 
 exports.getRequestById = async (req, res) => {
   const user = req.user;
-  if (!ObjectId.isValid(req.params.id)) return jsonError(res, 400, "Invalid request.");
+  if (!ObjectId.isValid(req.params.id))
+    return jsonError(res, 400, "Invalid request.");
   const canManageAll = ["admin", "volunteer"].includes(user.role);
   const query = canManageAll
     ? { _id: new ObjectId(req.params.id) }
@@ -157,21 +191,26 @@ exports.getRequestById = async (req, res) => {
 exports.updateRequest = async (req, res) => {
   const user = req.user;
   if (user.role === "volunteer") return jsonError(res, 403, "Forbidden.");
-  if (!ObjectId.isValid(req.params.id)) return jsonError(res, 400, "Invalid request.");
+  if (!ObjectId.isValid(req.params.id))
+    return jsonError(res, 400, "Invalid request.");
 
   const input = readRequestInput(req.body);
   if (Object.values(input).some((value) => !value)) {
     return jsonError(res, 400, "Please complete every required field.");
   }
-  if (!allowedBloodGroups.has(input.bloodGroup)) return jsonError(res, 400, "Invalid blood group.");
-  if (!(isValidLocation(input.recipientDistrict, input.recipientUpazila))) {
+  if (!allowedBloodGroups.has(input.bloodGroup))
+    return jsonError(res, 400, "Invalid blood group.");
+  if (!isValidLocation(input.recipientDistrict, input.recipientUpazila)) {
     return jsonError(res, 400, "Invalid location.");
   }
 
-  const updateQuery = user.role === "admin"
-    ? { _id: new ObjectId(req.params.id) }
-    : { $and: [{ _id: new ObjectId(req.params.id) }, ownerQuery(user)] };
-  const result = await donationRequests().updateOne(updateQuery, { $set: { ...input, updatedAt: new Date() } });
+  const updateQuery =
+    user.role === "admin"
+      ? { _id: new ObjectId(req.params.id) }
+      : { $and: [{ _id: new ObjectId(req.params.id) }, ownerQuery(user)] };
+  const result = await donationRequests().updateOne(updateQuery, {
+    $set: { ...input, updatedAt: new Date() },
+  });
   if (!result.matchedCount) return jsonError(res, 404, "Request not found.");
   return res.json({ success: true });
 };
@@ -179,10 +218,12 @@ exports.updateRequest = async (req, res) => {
 exports.deleteRequest = async (req, res) => {
   const user = req.user;
   if (user.role === "volunteer") return jsonError(res, 403, "Forbidden.");
-  if (!ObjectId.isValid(req.params.id)) return jsonError(res, 400, "Invalid request.");
-  const deleteQuery = user.role === "admin"
-    ? { _id: new ObjectId(req.params.id) }
-    : { $and: [{ _id: new ObjectId(req.params.id) }, ownerQuery(user)] };
+  if (!ObjectId.isValid(req.params.id))
+    return jsonError(res, 400, "Invalid request.");
+  const deleteQuery =
+    user.role === "admin"
+      ? { _id: new ObjectId(req.params.id) }
+      : { $and: [{ _id: new ObjectId(req.params.id) }, ownerQuery(user)] };
   const result = await donationRequests().deleteOne(deleteQuery);
   if (!result.deletedCount) return jsonError(res, 404, "Request not found.");
   return res.json({ success: true });
@@ -190,15 +231,20 @@ exports.deleteRequest = async (req, res) => {
 
 exports.updateStatus = async (req, res) => {
   const user = req.user;
-  if (!ObjectId.isValid(req.params.id)) return jsonError(res, 400, "Invalid request.");
+  if (!ObjectId.isValid(req.params.id))
+    return jsonError(res, 400, "Invalid request.");
   const nextStatus = clean(req.body?.status);
-  if (!statuses.has(nextStatus)) return jsonError(res, 400, "Invalid status update.");
+  if (!statuses.has(nextStatus))
+    return jsonError(res, 400, "Invalid status update.");
 
   const collection = donationRequests();
-  const request = await collection.findOne({ _id: new ObjectId(req.params.id) });
+  const request = await collection.findOne({
+    _id: new ObjectId(req.params.id),
+  });
   if (!request) return jsonError(res, 404, "Request not found.");
 
-  const isOwner = request.requesterId === user.id || request.requesterEmail === user.email;
+  const isOwner =
+    request.requesterId === user.id || request.requesterEmail === user.email;
   const canManageAll = ["admin", "volunteer"].includes(user.role);
 
   if (canManageAll) {
@@ -209,8 +255,16 @@ exports.updateStatus = async (req, res) => {
     return res.json({ success: true });
   }
 
-  if (!isOwner || request.donationStatus !== "inprogress" || !["done", "canceled"].includes(nextStatus)) {
-    return jsonError(res, 403, "Only in-progress owner requests can be updated.");
+  if (
+    !isOwner ||
+    request.donationStatus !== "inprogress" ||
+    !["done", "canceled"].includes(nextStatus)
+  ) {
+    return jsonError(
+      res,
+      403,
+      "Only in-progress owner requests can be updated.",
+    );
   }
 
   await collection.updateOne(
