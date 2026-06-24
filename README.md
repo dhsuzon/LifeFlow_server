@@ -1,4 +1,6 @@
 # LifeFlow Server
+## Live Link
+[https://life-flow-server-taupe.vercel.app/](https://life-flow-server-taupe.vercel.app/)
 
 Express + MongoDB backend for the LifeFlow blood donation platform.
 
@@ -37,10 +39,11 @@ npm run dev
 ## Env
 
 ```env
-PORT=9000
-CLIENT_URL=http://localhost:3000
+PORT=4000
+CLIENT_URL=http:https://life-flow-client.vercel.app/
 MONGO_DB_URL=
 BETTER_AUTH_SECRET=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
+BETTER_AUTH_URL=https://life-flow-server-taupe.vercel.app/
 ```
