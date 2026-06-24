@@ -1,5 +1,3 @@
-const { db } = require("../config/db");
+import { db } from "../config/db.js";
 
-const donationRequests = () => db.collection("donationRequests");
-
-module.exports = { donationRequests };
+export const donationRequests = () => db.collection("donationRequests");

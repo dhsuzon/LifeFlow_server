@@ -1,8 +1,8 @@
-const { ObjectId } = require("mongodb");
-const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
-const { auth } = require("../config/auth");
-const { users } = require("../models/userModel");
-const { jsonError } = require("../utils/response");
+import { ObjectId } from "mongodb";
+import { createRemoteJWKSet, jwtVerify } from "jose-cjs";
+import { auth } from "../config/auth.js";
+import { users } from "../models/userModel.js";
+import { jsonError } from "../utils/response.js";
 
 const clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
 const jwks = createRemoteJWKSet(new URL(`${clientUrl}/api/auth/jwks`));
@@ -22,9 +22,11 @@ const resolveUser = async (identity) => {
       conditions.push({ _id: new ObjectId(identity.id) });
   }
   if (identity.email) conditions.push({ email: identity.email });
+
   const doc = conditions.length
     ? await users().findOne({ $or: conditions })
     : null;
+
   if (!doc) {
     return identity.email
       ? {
@@ -45,7 +47,7 @@ const resolveUser = async (identity) => {
   };
 };
 
-const getCurrentUser = async (req) => {
+export const getCurrentUser = async (req) => {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
     if (session?.user) {
@@ -73,11 +75,9 @@ const getCurrentUser = async (req) => {
   }
 };
 
-const authenticate = async (req, res, next) => {
+export const authenticate = async (req, res, next) => {
   const user = await getCurrentUser(req);
   if (!user) return jsonError(res, 401, "Unauthorized.");
   req.user = user;
   next();
 };
-
-module.exports = { authenticate, getCurrentUser };

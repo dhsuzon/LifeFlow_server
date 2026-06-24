@@ -1,5 +1,7 @@
-const { MongoClient, ServerApiVersion } = require("mongodb");
-require("dotenv").config();
+import { MongoClient, ServerApiVersion } from "mongodb";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const uri = process.env.MONGO_DB_URL;
 if (!uri) {
@@ -7,7 +9,8 @@ if (!uri) {
 }
 
 const globalForMongo = globalThis;
-const client =
+
+export const client =
   globalForMongo.__lifeflowMongoClient ||
   new MongoClient(uri, {
     serverApi: {
@@ -21,6 +24,4 @@ if (process.env.NODE_ENV !== "production") {
   globalForMongo.__lifeflowMongoClient = client;
 }
 
-const db = client.db("blood_donation_db");
-
-module.exports = { client, db };
+export const db = client.db("blood_donation_db");

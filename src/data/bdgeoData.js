@@ -1,4 +1,4 @@
-const districts = [
+export const districts = [
   {
     id: "1",
     division_id: "1",
@@ -577,7 +577,7 @@ const districts = [
   },
 ];
 
-const upazilas = [
+export const upazilas = [
   {
     id: "1",
     district_id: "1",
@@ -4037,5 +4037,3 @@ const upazilas = [
     url: "null",
   },
 ];
-
-module.exports = { districts, upazilas };

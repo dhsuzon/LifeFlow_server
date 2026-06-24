@@ -1,7 +1,9 @@
-const router = require("express").Router();
-const { authenticate } = require("../middlewares/authMiddleware");
-const controller = require("../controllers/funding.controller");
+import { Router } from "express";
+import { authenticate } from "../middlewares/authMiddleware.js";
+import * as controller from "../controllers/funding.controller.js";
+
+const router = Router();
 
 router.get("/", authenticate, controller.getFunding);
 
-module.exports = router;
+export default router;

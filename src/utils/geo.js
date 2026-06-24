@@ -1,7 +1,8 @@
-const { districts, upazilas } = require("../data/bdgeoData");
+import { districts, upazilas } from "../data/bdgeoData.js";
 
-function isValidLocation(districtName, upazilaName) {
+export const isValidLocation = (districtName, upazilaName) => {
   const district = districts.find((item) => item.name === districtName);
+
   const validUpazila =
     district &&
     upazilas.some(
@@ -9,7 +10,6 @@ function isValidLocation(districtName, upazilaName) {
         item.name === upazilaName &&
         String(item.district_id) === String(district.id),
     );
-  return Boolean(district && validUpazila);
-}
 
-module.exports = { isValidLocation };
+  return Boolean(district && validUpazila);
+};

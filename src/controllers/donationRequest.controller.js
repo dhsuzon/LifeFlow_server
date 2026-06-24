@@ -1,15 +1,15 @@
-const { ObjectId } = require("mongodb");
-const { donationRequests } = require("../models/donationRequestModel");
-const { users } = require("../models/userModel");
-const { bloodGroups } = require("../data/bloodGroups");
-const {
+import { ObjectId } from "mongodb";
+import { donationRequests } from "../models/donationRequestModel.js";
+import { users } from "../models/userModel.js";
+import { bloodGroups } from "../data/bloodGroups.js";
+import {
   clean,
   jsonError,
   parsePagination,
   ownerQuery,
   serializeRequest,
-} = require("../utils/response");
-const { isValidLocation } = require("../utils/geo");
+} from "../utils/response.js";
+import { isValidLocation } from "../utils/geo.js";
 
 const allowedBloodGroups = new Set(bloodGroups.map((group) => group.name));
 const statuses = new Set(["pending", "inprogress", "done", "canceled"]);
@@ -28,7 +28,7 @@ const readRequestInput = (body) => {
   };
 };
 
-exports.createRequest = async (req, res) => {
+export const createRequest = async (req, res) => {
   const user = req.user;
   if (user.status !== "active")
     return jsonError(
@@ -70,7 +70,7 @@ exports.createRequest = async (req, res) => {
     .json({ success: true, requestId: result.insertedId.toString() });
 };
 
-exports.getMyRequests = async (req, res) => {
+export const getMyRequests = async (req, res) => {
   const user = req.user;
   const selectedStatus = statuses.has(req.query.status)
     ? req.query.status
@@ -101,7 +101,7 @@ exports.getMyRequests = async (req, res) => {
   });
 };
 
-exports.getPublicRequests = async (req, res) => {
+export const getPublicRequests = async (req, res) => {
   const { page, pageSize } = parsePagination(req.query, 9, 24);
   const query = { donationStatus: "pending" };
   const collection = donationRequests();
@@ -122,7 +122,7 @@ exports.getPublicRequests = async (req, res) => {
   });
 };
 
-exports.searchDonors = async (req, res) => {
+export const searchDonors = async (req, res) => {
   const bloodGroup = clean(req.query.bloodGroup);
   const district = clean(req.query.district);
   const upazila = clean(req.query.upazila);
@@ -165,7 +165,7 @@ exports.searchDonors = async (req, res) => {
   });
 };
 
-exports.getPublicRequestById = async (req, res) => {
+export const getPublicRequestById = async (req, res) => {
   if (!ObjectId.isValid(req.params.id))
     return jsonError(res, 400, "Invalid request.");
   const request = await donationRequests().findOne({
@@ -175,7 +175,7 @@ exports.getPublicRequestById = async (req, res) => {
   return res.json({ success: true, request: serializeRequest(request) });
 };
 
-exports.getRequestById = async (req, res) => {
+export const getRequestById = async (req, res) => {
   const user = req.user;
   if (!ObjectId.isValid(req.params.id))
     return jsonError(res, 400, "Invalid request.");
@@ -188,7 +188,7 @@ exports.getRequestById = async (req, res) => {
   return res.json({ success: true, request: serializeRequest(request) });
 };
 
-exports.updateRequest = async (req, res) => {
+export const updateRequest = async (req, res) => {
   const user = req.user;
   if (user.role === "volunteer") return jsonError(res, 403, "Forbidden.");
   if (!ObjectId.isValid(req.params.id))
@@ -208,6 +208,7 @@ exports.updateRequest = async (req, res) => {
     user.role === "admin"
       ? { _id: new ObjectId(req.params.id) }
       : { $and: [{ _id: new ObjectId(req.params.id) }, ownerQuery(user)] };
+
   const result = await donationRequests().updateOne(updateQuery, {
     $set: { ...input, updatedAt: new Date() },
   });
@@ -215,21 +216,23 @@ exports.updateRequest = async (req, res) => {
   return res.json({ success: true });
 };
 
-exports.deleteRequest = async (req, res) => {
+export const deleteRequest = async (req, res) => {
   const user = req.user;
   if (user.role === "volunteer") return jsonError(res, 403, "Forbidden.");
   if (!ObjectId.isValid(req.params.id))
     return jsonError(res, 400, "Invalid request.");
+
   const deleteQuery =
     user.role === "admin"
       ? { _id: new ObjectId(req.params.id) }
       : { $and: [{ _id: new ObjectId(req.params.id) }, ownerQuery(user)] };
+
   const result = await donationRequests().deleteOne(deleteQuery);
   if (!result.deletedCount) return jsonError(res, 404, "Request not found.");
   return res.json({ success: true });
 };
 
-exports.updateStatus = async (req, res) => {
+export const updateStatus = async (req, res) => {
   const user = req.user;
   if (!ObjectId.isValid(req.params.id))
     return jsonError(res, 400, "Invalid request.");

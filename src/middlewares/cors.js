@@ -5,7 +5,7 @@ const allowedOrigins = [
   "http://localhost:3001",
 ];
 
-const corsOptions = {
+export const corsOptions = {
   origin(origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -23,5 +23,3 @@ const corsOptions = {
     "stripe-signature",
   ],
 };
-
-module.exports = { corsOptions };

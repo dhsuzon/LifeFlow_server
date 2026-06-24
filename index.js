@@ -1,31 +1,38 @@
-require("dotenv").config({ override: true });
+import dotenv from "dotenv";
+dotenv.config({ override: true });
 
-const express = require("express");
-const cors = require("cors");
-const { toNodeHandler } = require("better-auth/node");
+import express from "express";
+import cors from "cors";
+import { toNodeHandler } from "better-auth/node";
 
-const { auth } = require("./src/config/auth");
-const { corsOptions } = require("./src/middlewares/cors");
-const fundingController = require("./src/controllers/funding.controller");
-const donationRequestRoutes = require("./src/routes/donationRequest.routes");
-const publicRequestRoutes = require("./src/routes/publicRequest.routes");
-const adminRoutes = require("./src/routes/admin.routes");
-const fundingRoutes = require("./src/routes/funding.routes");
-const stripeRoutes = require("./src/routes/stripe.routes");
+// লোকাল ফাইল ইমপোর্ট করার সময় অবশ্যই .js এক্সটেনশন দিতে হবে
+import { auth } from "./src/config/auth.js";
+import { corsOptions } from "./src/middlewares/cors.js";
+import * as fundingController from "./src/controllers/funding.controller.js";
+import donationRequestRoutes from "./src/routes/donationRequest.routes.js";
+import publicRequestRoutes from "./src/routes/publicRequest.routes.js";
+import adminRoutes from "./src/routes/admin.routes.js";
+import fundingRoutes from "./src/routes/funding.routes.js";
+import stripeRoutes from "./src/routes/stripe.routes.js";
 
 const app = express();
-const port = process.env.PORT || 400;
+const port = process.env.PORT || 4000;
 
 app.use(cors(corsOptions));
 
+// Better Auth হ্যান্ডলার
 app.use("/api/auth", toNodeHandler(auth));
+
+// Stripe Webhook (এটি express.json()-এর আগে থাকতে হবে)
 app.post(
   "/api/stripe/webhook",
   express.raw({ type: "application/json" }),
   fundingController.handleWebhook,
 );
+
 app.use(express.json());
 
+// Routes
 app.get("/", (req, res) =>
   res.json({ status: "ok", message: "LifeFlow server is running" }),
 );
@@ -37,10 +44,11 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/funding", fundingRoutes);
 app.use("/api/stripe", stripeRoutes);
 
-if (require.main === module) {
+// সার্ভার স্টার্ট
+if (process.env.NODE_ENV !== "production") {
   app.listen(port, () =>
     console.log(`LifeFlow server running on http://localhost:${port}`),
   );
 }
 
-module.exports = app;
+export default app;

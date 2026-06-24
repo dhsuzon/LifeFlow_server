@@ -1,7 +1,9 @@
-const router = require("express").Router();
-const { authenticate } = require("../middlewares/authMiddleware");
-const controller = require("../controllers/donationRequest.controller");
+import { Router } from "express";
+import { authenticate } from "../middlewares/authMiddleware.js";
+import * as controller from "../controllers/donationRequest.controller.js";
+
+const router = Router();
 
 router.get("/:id", authenticate, controller.getPublicRequestById);
 
-module.exports = router;
+export default router;

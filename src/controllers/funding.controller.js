@@ -1,11 +1,15 @@
-const Stripe = require("stripe");
-const { funds } = require("../models/fundingModel");
-const { jsonError } = require("../utils/response");
+import Stripe from "stripe";
+import { funds } from "../models/fundingModel.js";
+import { jsonError } from "../utils/response.js";
 
 const clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
 
-exports.getFunding = async (req, res) => {
-  const records = await funds().find().sort({ fundingDate: -1, _id: -1 }).limit(100).toArray();
+export const getFunding = async (req, res) => {
+  const records = await funds()
+    .find()
+    .sort({ fundingDate: -1, _id: -1 })
+    .limit(100)
+    .toArray();
   return res.json({
     success: true,
     records: records.map((item) => ({
@@ -17,12 +21,16 @@ exports.getFunding = async (req, res) => {
   });
 };
 
-exports.createCheckout = async (req, res) => {
+export const createCheckout = async (req, res) => {
   const user = req.user;
   const secretKey = process.env.STRIPE_SECRET_KEY?.trim();
   if (!secretKey) return jsonError(res, 503, "Stripe is not configured");
   if (!secretKey.startsWith("sk_")) {
-    return jsonError(res, 503, "STRIPE_SECRET_KEY must use an sk_test_ or sk_live_ key, not a publishable key.");
+    return jsonError(
+      res,
+      503,
+      "STRIPE_SECRET_KEY must use an sk_test_ or sk_live_ key, not a publishable key.",
+    );
   }
 
   const amount = Number(req.body?.amount);
@@ -53,11 +61,15 @@ exports.createCheckout = async (req, res) => {
     });
     return res.json({ success: true, url: checkout.url });
   } catch (error) {
-    return jsonError(res, 500, error?.message || "Unable to start Stripe Checkout.");
+    return jsonError(
+      res,
+      500,
+      error?.message || "Unable to start Stripe Checkout.",
+    );
   }
 };
 
-exports.handleWebhook = async (req, res) => {
+export const handleWebhook = async (req, res) => {
   const secretKey = process.env.STRIPE_SECRET_KEY?.trim();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
   if (!secretKey || !webhookSecret) {
@@ -67,7 +79,11 @@ exports.handleWebhook = async (req, res) => {
   try {
     const stripe = new Stripe(secretKey);
     const signature = req.headers["stripe-signature"];
-    const event = stripe.webhooks.constructEvent(req.body, signature, webhookSecret);
+    const event = stripe.webhooks.constructEvent(
+      req.body,
+      signature,
+      webhookSecret,
+    );
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
@@ -78,7 +94,8 @@ exports.handleWebhook = async (req, res) => {
             stripeSessionId: session.id,
             userId: session.metadata?.userId || "",
             userName: session.metadata?.userName || "User",
-            userEmail: session.metadata?.userEmail || session.customer_email || "",
+            userEmail:
+              session.metadata?.userEmail || session.customer_email || "",
             amount: (session.amount_total || 0) / 100,
             currency: session.currency || "usd",
             fundingDate: new Date(),

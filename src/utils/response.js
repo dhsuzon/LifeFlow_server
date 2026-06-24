@@ -1,12 +1,12 @@
-function clean(value) {
+export function clean(value) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function jsonError(res, status, message) {
+export function jsonError(res, status, message) {
   return res.status(status).json({ success: false, error: message });
 }
 
-function parsePagination(query, defaultPageSize = 10, maxPageSize = 20) {
+export function parsePagination(query, defaultPageSize = 10, maxPageSize = 20) {
   const pageSize = Math.min(
     Math.max(Number(query.pageSize) || defaultPageSize, 1),
     maxPageSize,
@@ -15,11 +15,11 @@ function parsePagination(query, defaultPageSize = 10, maxPageSize = 20) {
   return { page, pageSize };
 }
 
-function ownerQuery(user) {
+export function ownerQuery(user) {
   return { $or: [{ requesterId: user.id }, { requesterEmail: user.email }] };
 }
 
-function serializeRequest(request) {
+export function serializeRequest(request) {
   return {
     id: request._id.toString(),
     requesterId: request.requesterId || "",
@@ -41,11 +41,3 @@ function serializeRequest(request) {
     updatedAt: request.updatedAt?.toISOString?.() || "",
   };
 }
-
-module.exports = {
-  clean,
-  jsonError,
-  parsePagination,
-  ownerQuery,
-  serializeRequest,
-};
